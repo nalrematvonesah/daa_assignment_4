@@ -6,37 +6,57 @@ import java.util.*;
 
 public class DAGShortestPaths {
 
-    public double[] shortestPath(Graph g, int src, List<Integer> topo) {
-        double[] dist = new double[g.n];
-        Arrays.fill(dist, Double.POSITIVE_INFINITY);
-        dist[src] = 0;
-
-        for (int u : topo) {
-            if (dist[u] != Double.POSITIVE_INFINITY) {
-                for (Edge e : g.adj.get(u)) {
-                    if (dist[e.to] > dist[u] + e.weight) {
-                        dist[e.to] = dist[u] + e.weight;
-                    }
-                }
-            }
-        }
-        return dist;
+    public static class Result {
+        public final double[] dist;
+        public final int[] parent;
+        public Result(double[] d, int[] p) { this.dist = d; this.parent = p; }
     }
 
-    public double[] longestPath(Graph g, int src, List<Integer> topo) {
+    public Result shortestPath(Graph g, int src, List<Integer> topo) {
         double[] dist = new double[g.n];
-        Arrays.fill(dist, Double.NEGATIVE_INFINITY);
-        dist[src] = 0;
+        int[] par = new int[g.n];
+        Arrays.fill(dist, Double.POSITIVE_INFINITY);
+        Arrays.fill(par, -1);
+        dist[src] = 0.0;
 
         for (int u : topo) {
-            if (dist[u] != Double.NEGATIVE_INFINITY) {
-                for (Edge e : g.adj.get(u)) {
-                    if (dist[e.to] < dist[u] + e.weight) {
-                        dist[e.to] = dist[u] + e.weight;
-                    }
+            if (dist[u] == Double.POSITIVE_INFINITY) continue;
+            for (Edge e : g.adj.get(u)) {
+                double nd = dist[u] + e.weight;
+                if (nd < dist[e.to]) {
+                    dist[e.to] = nd;
+                    par[e.to] = u;
                 }
             }
         }
-        return dist;
+        return new Result(dist, par);
+    }
+
+    public Result longestPath(Graph g, int src, List<Integer> topo) {
+        double[] dist = new double[g.n];
+        int[] par = new int[g.n];
+        Arrays.fill(dist, Double.NEGATIVE_INFINITY);
+        Arrays.fill(par, -1);
+        dist[src] = 0.0;
+
+        for (int u : topo) {
+            if (dist[u] == Double.NEGATIVE_INFINITY) continue;
+            for (Edge e : g.adj.get(u)) {
+                double nd = dist[u] + e.weight;
+                if (nd > dist[e.to]) {
+                    dist[e.to] = nd;
+                    par[e.to] = u;
+                }
+            }
+        }
+        return new Result(dist, par);
+    }
+
+    public static List<Integer> reconstructPath(int target, int[] parent) {
+        if (target < 0) return Collections.emptyList();
+        List<Integer> path = new ArrayList<>();
+        for (int v = target; v != -1; v = parent[v]) path.add(v);
+        Collections.reverse(path);
+        return path;
     }
 }

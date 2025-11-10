@@ -1,63 +1,54 @@
 package org.example.graph.scc;
 
-
 import org.example.graph.Edge;
 import org.example.graph.Graph;
-
 import java.util.*;
 
 public class TarjanSCC {
     private int time;
-    private int[] disc;
-    private int[] low;
-    private boolean[] stackMember;
-    private Deque<Integer> stack;
-    private List<List<Integer>> sccList;
+    private int[] disc, low;
+    private boolean[] inStack;
+    private Deque<Integer> st;
+    private List<List<Integer>> sccs;
 
     public List<List<Integer>> findSCCs(Graph g) {
         int n = g.n;
         time = 0;
         disc = new int[n];
         low = new int[n];
-        stackMember = new boolean[n];
-        stack = new ArrayDeque<Integer>();
-        sccList = new ArrayList<List<Integer>>();
-
+        inStack = new boolean[n];
         Arrays.fill(disc, -1);
+        st = new ArrayDeque<>();
+        sccs = new ArrayList<>();
 
-        for (int i = 0; i < n; i++) {
-            if (disc[i] == -1) {
-                dfs(g, i);
-            }
-        }
-
-        return sccList;
+        for (int i = 0; i < n; i++) if (disc[i] == -1) dfs(g, i);
+        return sccs;
     }
 
     private void dfs(Graph g, int u) {
         disc[u] = low[u] = ++time;
-        stack.push(u);
-        stackMember[u] = true;
+        st.push(u);
+        inStack[u] = true;
 
-        for (Edge edge : g.adj.get(u)) {
-            int v = edge.to;
+        for (Edge e : g.adj.get(u)) {
+            int v = e.to;
             if (disc[v] == -1) {
                 dfs(g, v);
                 low[u] = Math.min(low[u], low[v]);
-            } else if (stackMember[v]) {
+            } else if (inStack[v]) {
                 low[u] = Math.min(low[u], disc[v]);
             }
         }
 
         if (low[u] == disc[u]) {
-            List<Integer> component = new ArrayList<Integer>();
+            List<Integer> comp = new ArrayList<>();
             while (true) {
-                int v = stack.pop();
-                stackMember[v] = false;
-                component.add(v);
+                int v = st.pop();
+                inStack[v] = false;
+                comp.add(v);
                 if (v == u) break;
             }
-            sccList.add(component);
+            sccs.add(comp);
         }
     }
 }

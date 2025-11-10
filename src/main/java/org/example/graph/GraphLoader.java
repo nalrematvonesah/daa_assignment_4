@@ -7,14 +7,13 @@ import java.io.IOException;
 public class GraphLoader {
 
     public static class GraphMeta {
-        public int source;
-        public String weightModel;
+        public int source = 0;
+        public String weightModel = "edge";
     }
 
     public static class GraphData {
-        public Graph graph;
-        public GraphMeta meta;
-
+        public final Graph graph;
+        public final GraphMeta meta;
         public GraphData(Graph graph, GraphMeta meta) {
             this.graph = graph;
             this.meta = meta;
@@ -22,25 +21,22 @@ public class GraphLoader {
     }
 
     public static GraphData loadFromJson(String path) throws IOException {
-        Gson gson = new Gson();
-        JsonObject root = gson.fromJson(new FileReader(path), JsonObject.class);
-
-        int n = root.get("n").getAsInt();
-        Graph g = new Graph(n);
-
-        JsonArray edges = root.getAsJsonArray("edges");
-        for (JsonElement e : edges) {
-            JsonObject obj = e.getAsJsonObject();
-            int from = obj.get("u").getAsInt();
-            int to = obj.get("v").getAsInt();
-            double w = obj.get("w").getAsDouble();
-            g.addEdge(from, to, w);
+        try (FileReader fr = new FileReader(path)) {
+            JsonObject root = JsonParser.parseReader(fr).getAsJsonObject();
+            int n = root.get("n").getAsInt();
+            Graph g = new Graph(n);
+            JsonArray edges = root.getAsJsonArray("edges");
+            for (JsonElement e : edges) {
+                JsonObject obj = e.getAsJsonObject();
+                int u = obj.get("u").getAsInt();
+                int v = obj.get("v").getAsInt();
+                double w = obj.get("w").getAsDouble();
+                g.addEdge(u, v, w);
+            }
+            GraphMeta meta = new GraphMeta();
+            if (root.has("source")) meta.source = root.get("source").getAsInt();
+            if (root.has("weight_model")) meta.weightModel = root.get("weight_model").getAsString();
+            return new GraphData(g, meta);
         }
-
-        GraphMeta meta = new GraphMeta();
-        if (root.has("source")) meta.source = root.get("source").getAsInt();
-        if (root.has("weight_model")) meta.weightModel = root.get("weight_model").getAsString();
-
-        return new GraphData(g, meta);
     }
 }
